@@ -17,6 +17,8 @@ Robot robot; // initialized in setup
 
 int numRepeats = 1; // sets the number of times each button repeats in the test
 
+boolean radialMode = false;
+
 void settings() {
   size(700, 700);
 }
@@ -50,19 +52,7 @@ void draw() {
   background(0);
 
   if (trialNum >= trials.size()) {
-    float timeTaken = (finishTime - startTime) / 1000f;
-    float penalty = constrain(((95f - ((float) hits * 100f / (float) (hits + misses))) * .2f), 0, 100);
-    fill(255);
-    text("Finished!", width / 2, height / 2);
-    text("Hits: " + hits, width / 2, height / 2 + 20);
-    text("Misses: " + misses, width / 2, height / 2 + 40);
-    text("Accuracy: " + (float) hits * 100f / (float) (hits + misses) + "%", width / 2, height / 2 + 60);
-    text("Total time taken: " + timeTaken + " sec", width / 2, height / 2 + 80);
-    text("Average time for each button: " + nf((timeTaken) / (float) (hits + misses), 0, 3) + " sec",
-         width / 2, height / 2 + 100);
-    text("Average time for each button + penalty: "
-         + nf(((timeTaken) / (float) (hits + misses) + penalty), 0, 3) + " sec",
-         width / 2, height / 2 + 140);
+    drawEndScreen();
     return;
   }
 
@@ -80,7 +70,7 @@ void draw() {
 // a button. If so, it returns the button ID. You can do something else to decide what button the user is selecting.
 public int getSelectedButton(int locX, int locY) {
 	for (int i = 0; i < 16; i++) {
-		Rectangle bounds = getButtonLocation(i);
+		Rectangle bounds = getButtonBounds(i);
 
     // Test for hitbox collision
 		if ((locX > bounds.x && locX < bounds.x + bounds.width) && (locY > bounds.y && locY < bounds.y + bounds.height))
@@ -97,10 +87,9 @@ void mousePressed() {
   if (trialNum == 0)
     startTime = millis();
 
-  if (trialNum == trials.size() - 1) {
+  if (trialNum == trials.size() - 1) 
     finishTime = millis();
-    println("we're all done!");
-  }
+  
 
   int targetID = trials.get(trialNum);
   int selectedButtonID = getSelectedButton(mouseX, mouseY);
@@ -115,21 +104,37 @@ void mousePressed() {
   trialNum++;
 }
 
-Rectangle getButtonLocation(int i) {
+Rectangle getButtonBounds(int i) {
   int x = (i % 4) * (padding + buttonSize) + margin;
   int y = (i / 4) * (padding + buttonSize) + margin;
   return new Rectangle(x, y, buttonSize, buttonSize);
 }
 
 void drawButton(int i) {
-  Rectangle bounds = getButtonLocation(i);
+  Rectangle bounds = getButtonBounds(i);
 
-  if (trials.get(trialNum) == i)
+  fill(200);
+
+  if (trials.get(trialNum) == i) // Strictly for changing target's color. Do not modify
     fill(0, 255, 255);
-  else
-    fill(200);
 
   rect(bounds.x, bounds.y, bounds.width, bounds.height);
+}
+
+void drawEndScreen() {
+  float timeTaken = (finishTime - startTime) / 1000f;
+  float penalty = constrain(((95f - ((float) hits * 100f / (float) (hits + misses))) * .2f), 0, 100);
+  fill(255);
+  text("Finished!", width / 2, height / 2);
+  text("Hits: " + hits, width / 2, height / 2 + 20);
+  text("Misses: " + misses, width / 2, height / 2 + 40);
+  text("Accuracy: " + (float) hits * 100f / (float) (hits + misses) + "%", width / 2, height / 2 + 60);
+  text("Total time taken: " + timeTaken + " sec", width / 2, height / 2 + 80);
+  text("Average time for each button: " + nf((timeTaken) / (float) (hits + misses), 0, 3) + " sec",
+        width / 2, height / 2 + 100);
+  text("Average time for each button + penalty: "
+        + nf(((timeTaken) / (float) (hits + misses) + penalty), 0, 3) + " sec",
+        width / 2, height / 2 + 140);
 }
 
 void mouseMoved() {}
