@@ -1,3 +1,12 @@
+/**
+ * Bake Off 1: Phase 2
+ * Authors: Loic Kraemer Bastos, Zhengyao Li, and Aidan Sheehan
+ * Date: 2026-02-11
+ * CS3540
+ * 
+ * Radial Layout prototype
+ */
+
 import java.awt.AWTException;
 import java.awt.Rectangle;
 import java.awt.Robot;
@@ -17,7 +26,14 @@ Robot robot; // initialized in setup
 
 int numRepeats = 1; // sets the number of times each button repeats in the test
 
-boolean radialMode = false;
+// Radial Layout
+boolean radialMode = false; // flag to use the radial layout. False uses the original 4x4 layout
+final int numButtons = 16;
+final float offset = PI / numButtons;
+int radius = width / 2;
+int innerRadius = radius / 4;
+float translateX = radius;
+float translateY = radius;
 
 void settings() {
   size(700, 700);
@@ -46,6 +62,12 @@ void setup() {
   println("trial order: " + trials);
 
   surface.setLocation(0, 0);
+
+  radius = width / 2;
+  innerRadius = radius / 4;
+  translateX = radius;
+  translateY = radius;
+  println(radius);
 }
 
 void draw() {
@@ -66,20 +88,6 @@ void draw() {
   ellipse(mouseX, mouseY, 20, 20);
 }
 
-// you can change this code. Right now, it looks at the input location, and then checks if that location is within the bounds of 
-// a button. If so, it returns the button ID. You can do something else to decide what button the user is selecting.
-public int getSelectedButton(int locX, int locY) {
-	for (int i = 0; i < 16; i++) {
-		Rectangle bounds = getButtonBounds(i);
-
-    // Test for hitbox collision
-		if ((locX > bounds.x && locX < bounds.x + bounds.width) && (locY > bounds.y && locY < bounds.y + bounds.height))
-			return i;
-	}
-	// returns -1 if the click was not on a button
-	return -1;
-}
-
 void mousePressed() {
   if (trialNum >= trials.size())
     return;
@@ -92,7 +100,7 @@ void mousePressed() {
   
 
   int targetID = trials.get(trialNum);
-  int selectedButtonID = getSelectedButton(mouseX, mouseY);
+  int selectedButtonID = testButtonCollision(mouseX, mouseY);
   if(selectedButtonID == targetID){
     System.out.println("HIT! Trial:" + trialNum + ". Target: "+targetID+". Cumulative time:" + (millis() - startTime)); // success
     hits++;
@@ -104,21 +112,131 @@ void mousePressed() {
   trialNum++;
 }
 
-Rectangle getButtonBounds(int i) {
-  int x = (i % 4) * (padding + buttonSize) + margin;
-  int y = (i / 4) * (padding + buttonSize) + margin;
-  return new Rectangle(x, y, buttonSize, buttonSize);
+// Rectangle getButtonLocation(int i) {
+//   int x = (i % 4) * (padding + buttonSize) + margin;
+//   int y = (i / 4) * (padding + buttonSize) + margin;
+//   return new Rectangle(x, y, buttonSize, buttonSize);
+// }
+
+PShape getButtonBounds(int i) {
+  PShape button = createShape();
+  button.beginShape(QUADS);
+  if (radialMode) {
+    int x1, y1, x2, y2, x3, y3, x4, y4;
+
+    // Vertex positions
+    // p1 p2
+    // p4 p3
+    x1 = int(cos((TWO_PI / numButtons) * i + HALF_PI + offset) * radius + translateX);
+    y1 = int(sin((TWO_PI / numButtons) * i + HALF_PI + offset) * radius + translateY);
+    x2 = int(cos((TWO_PI / numButtons) * i + HALF_PI - offset) * radius + translateX);
+    y2 = int(sin((TWO_PI / numButtons) * i + HALF_PI - offset) * radius + translateY);
+    x3 = int(cos((TWO_PI / numButtons) * i + HALF_PI - offset) * innerRadius + translateX);
+    y3 = int(sin((TWO_PI / numButtons) * i + HALF_PI - offset) * innerRadius + translateY);
+    x4 = int(cos((TWO_PI / numButtons) * i + HALF_PI + offset) * innerRadius + translateX);
+    y4 = int(sin((TWO_PI / numButtons) * i + HALF_PI + offset) * innerRadius + translateY);
+
+    // println("Button " + i + ": ("+x1+" "+y1+") ("+x2+" "+y2+") ("+x3+" "+y3+") ("+x4+" "+y4+")");
+
+    button.vertex(x1, y1);
+    button.vertex(x2, y2);
+    button.vertex(x3, y3);
+    button.vertex(x4, y4);
+  }
+  else {
+    int x = (i % 4) * (padding + buttonSize) + margin;
+    int y = (i / 4) * (padding + buttonSize) + margin;
+    
+    // Equivalent to: createShape(RECT, x, y, buttonSize, buttonSize);
+    button.vertex(x, y);
+    button.vertex(x + buttonSize, y);
+    button.vertex(x + buttonSize, y + buttonSize);
+    button.vertex(x, y + buttonSize);
+  }
+  button.endShape();
+  return button;
 }
 
-void drawButton(int i) {
-  Rectangle bounds = getButtonBounds(i);
+int testButtonCollision(int locX, int locY) {
+  if (radialMode) {
+    // mouse click is valid if the distance of the position from the center is <= the circle's radius
+    float centerX = width / 2;
+    float centerY = height / 2;
 
+    float deltaX = centerX - locX;
+    float deltaY = centerY - locY;
+
+    float distance = sqrt(sq(deltaX) + sq(deltaY));
+    if (distance > radius || distance < innerRadius) {
+      print("No Circle Collision: " + distance + " > " + radius);
+      return -1;
+    }
+
+    float offset = PI / numButtons;
+    // float offset1 = (9 * PI / numButtons);
+    // float offset2 = (7 * PI / numButtons);
+
+    for (int i = 0; i < numButtons; i++) {
+      // p1 p2
+      // p4 p3
+      PShape button = getButtonBounds(i);
+      PVector p1 = button.getVertex(0);
+      PVector p2 = button.getVertex(1);
+
+      int x1 = int(cos((TWO_PI / numButtons) * i + HALF_PI + offset) * radius + translateX);
+      int y1 = int(sin((TWO_PI / numButtons) * i + HALF_PI + offset) * radius + translateY);
+      int x2 = int(cos((TWO_PI / numButtons) * i + HALF_PI - offset) * radius + translateX);
+      int y2 = int(sin((TWO_PI / numButtons) * i + HALF_PI - offset) * radius + translateY);
+
+      // Inside a sector: 1. point is ccw from the start 2. point is cw from the end 3. Inside radius
+      boolean isCCWFromStart = (-p1.x * locY + p1.y * locX) > 0;
+      boolean isCWFromEnd = (-p2.x * locY + p2.y * locX) > 0;
+      if (isCCWFromStart && isCWFromEnd)
+        return i;
+      
+    }
+  }
+  else {
+    for (int i = 0; i < numButtons; i++) {
+      PShape button = getButtonBounds(i);
+      PVector p1 = button.getVertex(0);
+      // println(locX + " " + locY + " (" + p1.x + " " + p1.y + " " + button.getWidth() + " " + button.getHeight() + ")");
+      if ((locX > p1.x && locX < button.getWidth()) && (locY > p1.y && locY < button.getHeight()))
+			  return i;
+    }
+  }
+
+
+  return -1;
+}
+
+// PShape createRadialButtons() {
+//   PShape button = createShape(QUAD);
+
+//   button.beginShape(QUADS);
+
+//   // button.vertex(0, 0); // center
+//   for(int i = 0; i <= numButtons; i++) {
+
+//   // Vertex position
+//     float x = cos((TWO_PI / numButtons) * i);
+//     float y = sin((TWO_PI / numButtons) * i);
+
+//     button.vertex(x, y);
+//   }
+//   button.endShape();
+//   return button;
+// }
+
+
+void drawButton(int i) {
   fill(200);
 
   if (trials.get(trialNum) == i) // Strictly for changing target's color. Do not modify
     fill(0, 255, 255);
 
-  rect(bounds.x, bounds.y, bounds.width, bounds.height);
+  PShape button = getButtonBounds(i);
+  shape(button);
 }
 
 void drawEndScreen() {
@@ -139,4 +257,7 @@ void drawEndScreen() {
 
 void mouseMoved() {}
 void mouseDragged() {}
-void keyPressed() {}
+void keyPressed() {
+  if (key == 'c')
+    radialMode = !radialMode;
+}
