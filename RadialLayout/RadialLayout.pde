@@ -67,7 +67,6 @@ void setup() {
   innerRadius = radius / 4;
   translateX = radius;
   translateY = radius;
-  println(radius);
 }
 
 void draw() {
@@ -173,25 +172,34 @@ int testButtonCollision(int locX, int locY) {
     }
 
     float offset = PI / numButtons;
-    // float offset1 = (9 * PI / numButtons);
-    // float offset2 = (7 * PI / numButtons);
 
     for (int i = 0; i < numButtons; i++) {
       // p1 p2
       // p4 p3
-      PShape button = getButtonBounds(i);
-      PVector p1 = button.getVertex(0);
-      PVector p2 = button.getVertex(1);
+            
+      // Centered around 0,0
+      float x1 = (cos((TWO_PI / numButtons) * i + HALF_PI + offset));// * radius);
+      float y1 = (sin((TWO_PI / numButtons) * i + HALF_PI + offset));// * radius);
+      float x2 = (cos((TWO_PI / numButtons) * i + HALF_PI - offset));// * radius);
+      float y2 = (sin((TWO_PI / numButtons) * i + HALF_PI - offset));// * radius);
 
-      int x1 = int(cos((TWO_PI / numButtons) * i + HALF_PI + offset) * radius + translateX);
-      int y1 = int(sin((TWO_PI / numButtons) * i + HALF_PI + offset) * radius + translateY);
-      int x2 = int(cos((TWO_PI / numButtons) * i + HALF_PI - offset) * radius + translateX);
-      int y2 = int(sin((TWO_PI / numButtons) * i + HALF_PI - offset) * radius + translateY);
+      PVector start = new PVector(x1, y1);
+      PVector end = new PVector(x2, y2);
+      start.normalize();
+      end.normalize();
+      PVector loc = new PVector(locX - translateX, -(locY - translateY));
+      loc.normalize();
 
-      // Inside a sector: 1. point is ccw from the start 2. point is cw from the end 3. Inside radius
-      boolean isCCWFromStart = (-p1.x * locY + p1.y * locX) > 0;
-      boolean isCWFromEnd = (-p2.x * locY + p2.y * locX) > 0;
-      if (isCCWFromStart && isCWFromEnd)
+      // println("Button "+i+": " + loc.x + ", " + loc.y + " (" + start.x + ", " + start.y + ") (" + end.x + ", " + end.y + ")");
+      // println(loc.x + " " + loc.y + " (" + x1 + " " + y1 + ") (" + x2 + " " + y2 + ")");
+      println("Angle between "+i+" ("+degrees(2 * offset)+"): " + degrees(PVector.angleBetween(start, loc)) + " " + degrees(PVector.angleBetween(end, loc)));
+
+      // Inside a sector: 1. loc point is inside radius 
+      // 2. AND loc point is within a button angle of start arm 
+      // 3. AND loc point is within a button angle of end arm
+      boolean isWithinStart = PVector.angleBetween(start, loc) < (2 * offset);
+      boolean isWithinEnd = PVector.angleBetween(end, loc) < (2 * offset);
+      if (isWithinStart && isWithinEnd)
         return i;
       
     }
