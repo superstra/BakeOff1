@@ -59,9 +59,11 @@ void setup() {
       trials.add(i);
 
   Collections.shuffle(trials);
-  println("trial order: " + trials);
+  // println("trial order: " + trials);
 
   surface.setLocation(0, 0);
+
+  robot.mouseMove(width / 2 + 7, height / 2 + 30);
 
   radius = width / 3;
   innerRadius = radius / 8;
@@ -99,14 +101,15 @@ void mousePressed() {
   if (trialNum == trials.size() - 1) 
     finishTime = millis();
   
+  robot.mouseMove(width / 2 + 7, height / 2 + 30);
 
   int targetID = trials.get(trialNum);
   int selectedButtonID = testButtonCollision(mouseX, mouseY);
   if(selectedButtonID == targetID){
-    System.out.println("HIT! Trial:" + trialNum + ". Target: "+targetID+". Cumulative time:" + (millis() - startTime)); // success
+    // System.out.println("HIT! Trial:" + trialNum + ". Target: "+targetID+". Cumulative time:" + (millis() - startTime)); // success
     hits++;
   } else {
-    System.out.println("MISSED! Trial:" + trialNum + ". Selected "+selectedButtonID+" but target was "+targetID+". Cumulative time:" + (millis() - startTime)); // fail
+    // System.out.println("MISSED! Trial:" + trialNum + ". Selected "+selectedButtonID+" but target was "+targetID+". Cumulative time:" + (millis() - startTime)); // fail
     misses++;
   }
 
@@ -218,10 +221,6 @@ int testButtonCollision(int locX, int locY) {
 void drawButton(int i) {
   PShape button = getButtonBounds(i);
   button.setFill(color(200));
-
-  // if (trials.get(trialNum) == i) // Strictly for changing target's color. Do not modify
-    // button.setFill(color(0, 255, 255));
-
   shape(button);
 }
 
