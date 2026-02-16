@@ -1,7 +1,7 @@
 /**
  * Bake Off 1: Phase 2
  * Authors: Loic Kraemer Bastos, Zhengyao Li, and Aidan Sheehan
- * Date: 2026-02-11
+ * Date: 2026-02-15
  * CS3540
  * 
  * Radial Layout prototype
@@ -30,10 +30,10 @@ int numRepeats = 1; // sets the number of times each button repeats in the test
 boolean radialMode = false; // flag to use the radial layout. False uses the original 4x4 layout
 final int numButtons = 16;
 final float offset = PI / numButtons;
-int radius = width / 2;
-int innerRadius = radius / 4;
-float translateX = radius;
-float translateY = radius;
+int radius;
+int innerRadius;
+float translateX;
+float translateY;
 
 void settings() {
   size(700, 700);
@@ -63,10 +63,10 @@ void setup() {
 
   surface.setLocation(0, 0);
 
-  radius = width / 2;
-  innerRadius = radius / 4;
-  translateX = radius;
-  translateY = radius;
+  radius = width / 3;
+  innerRadius = radius / 8;
+  translateX = width / 2;
+  translateY = height / 2;
 }
 
 void draw() {
@@ -74,6 +74,7 @@ void draw() {
 
   if (trialNum >= trials.size()) {
     drawEndScreen();
+    noLoop();
     return;
   }
 
@@ -82,6 +83,7 @@ void draw() {
 
   for (int i = 0; i < 16; i++)
     drawButton(i);
+  makeTargetBlue(trials.get(trialNum));
 
   fill(255, 0, 0, 200);
   ellipse(mouseX, mouseY, 20, 20);
@@ -111,12 +113,6 @@ void mousePressed() {
   trialNum++;
 }
 
-// Rectangle getButtonLocation(int i) {
-//   int x = (i % 4) * (padding + buttonSize) + margin;
-//   int y = (i / 4) * (padding + buttonSize) + margin;
-//   return new Rectangle(x, y, buttonSize, buttonSize);
-// }
-
 PShape getButtonBounds(int i) {
   PShape button = createShape();
   button.beginShape(QUADS);
@@ -135,12 +131,13 @@ PShape getButtonBounds(int i) {
     x4 = int(cos((TWO_PI / numButtons) * i + HALF_PI + offset) * innerRadius + translateX);
     y4 = int(sin((TWO_PI / numButtons) * i + HALF_PI + offset) * innerRadius + translateY);
 
-    // println("Button " + i + ": ("+x1+" "+y1+") ("+x2+" "+y2+") ("+x3+" "+y3+") ("+x4+" "+y4+")");
+    // println("Button " + i + ": ("+x1+", "+y1+") ("+x2+", "+y2+") ("+x3+", "+y3+") ("+x4+", "+y4+")");
 
-    button.vertex(x1, y1);
-    button.vertex(x2, y2);
-    button.vertex(x3, y3);
-    button.vertex(x4, y4);
+    // Reflect the coordinates over the y-axis to put 0,0 in the top-left
+    button.vertex(x1, height - y1);
+    button.vertex(x2, height - y2);
+    button.vertex(x3, height - y3);
+    button.vertex(x4, height - y4);
   }
   else {
     int x = (i % 4) * (padding + buttonSize) + margin;
@@ -192,7 +189,7 @@ int testButtonCollision(int locX, int locY) {
 
       // println("Button "+i+": " + loc.x + ", " + loc.y + " (" + start.x + ", " + start.y + ") (" + end.x + ", " + end.y + ")");
       // println(loc.x + " " + loc.y + " (" + x1 + " " + y1 + ") (" + x2 + " " + y2 + ")");
-      println("Angle between "+i+" ("+degrees(2 * offset)+"): " + degrees(PVector.angleBetween(start, loc)) + " " + degrees(PVector.angleBetween(end, loc)));
+      // println("Angle between "+i+" ("+degrees(2 * offset)+"): " + degrees(PVector.angleBetween(start, loc)) + " " + degrees(PVector.angleBetween(end, loc)));
 
       // Inside a sector: 1. loc point is inside radius 
       // 2. AND loc point is within a button angle of start arm 
@@ -218,32 +215,20 @@ int testButtonCollision(int locX, int locY) {
   return -1;
 }
 
-// PShape createRadialButtons() {
-//   PShape button = createShape(QUAD);
-
-//   button.beginShape(QUADS);
-
-//   // button.vertex(0, 0); // center
-//   for(int i = 0; i <= numButtons; i++) {
-
-//   // Vertex position
-//     float x = cos((TWO_PI / numButtons) * i);
-//     float y = sin((TWO_PI / numButtons) * i);
-
-//     button.vertex(x, y);
-//   }
-//   button.endShape();
-//   return button;
-// }
-
-
 void drawButton(int i) {
-  fill(200);
-
-  if (trials.get(trialNum) == i) // Strictly for changing target's color. Do not modify
-    fill(0, 255, 255);
-
   PShape button = getButtonBounds(i);
+  button.setFill(color(200));
+
+  // if (trials.get(trialNum) == i) // Strictly for changing target's color. Do not modify
+    // button.setFill(color(0, 255, 255));
+
+  shape(button);
+}
+
+//don't change this method
+public void makeTargetBlue(int i) {
+  PShape button = getButtonBounds(i);
+  button.setFill(color(0, 255, 255));
   shape(button);
 }
 
@@ -261,6 +246,11 @@ void drawEndScreen() {
   text("Average time for each button + penalty: "
         + nf(((timeTaken) / (float) (hits + misses) + penalty), 0, 3) + " sec",
         width / 2, height / 2 + 140);
+
+  // Print timing info to console
+  println("Total time taken: " + timeTaken + " sec");
+  println("Average time for each button: " + nf((timeTaken) / (float) (hits + misses), 0, 3) + " sec");
+  println("Average time for each button + penalty: " + nf(((timeTaken) / (float) (hits + misses) + penalty), 0, 3) + " sec");
 }
 
 void mouseMoved() {}
