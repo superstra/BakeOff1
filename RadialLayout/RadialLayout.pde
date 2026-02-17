@@ -28,12 +28,16 @@ int numRepeats = 1; // sets the number of times each button repeats in the test
 
 // Radial Layout
 boolean radialMode = false; // flag to use the radial layout. False uses the original 4x4 layout
+final int centerButtonRadius = 18;
+
 final int numButtons = 16;
 final float offset = PI / numButtons;
 int radius;
 int innerRadius;
 float translateX;
 float translateY;
+PVector center;
+
 
 void settings() {
   size(700, 700);
@@ -63,12 +67,13 @@ void setup() {
 
   surface.setLocation(0, 0);
 
-  robot.mouseMove(width / 2 + 7, height / 2 + 30);
-
   radius = width / 3;
   innerRadius = radius / 8;
-  translateX = width / 2;
-  translateY = height / 2;
+  center = new PVector(width/2, height/2);
+  translateX = center.x;
+  translateY = center.y;
+
+  robot.mouseMove(int(center.x) + 7, int(center.y) + 30);
 }
 
 void draw() {
@@ -82,6 +87,9 @@ void draw() {
 
   fill(255);
   text((trialNum + 1) + " of " + trials.size(), 40, 20);
+  text(radialMode ? "MODE: Radial (press C to exit)" : "MODE: GRID (press C for radial)", width/2, 20);
+
+  drawModeChangeButton();
 
   for (int i = 0; i < 16; i++)
     drawButton(i);
@@ -101,7 +109,13 @@ void mousePressed() {
   if (trialNum == trials.size() - 1) 
     finishTime = millis();
   
-  robot.mouseMove(width / 2 + 7, height / 2 + 30);
+  robot.mouseMove(int(center.x) + 7, int(center.y) + 30);
+
+  if (center.dist(new PVector(mouseX, mouseY)) <= centerButtonRadius) {
+    radialMode = !radialMode;
+    return;
+  }
+
 
   int targetID = trials.get(trialNum);
   int selectedButtonID = testButtonCollision(mouseX, mouseY);
@@ -250,6 +264,11 @@ void drawEndScreen() {
   println("Total time taken: " + timeTaken + " sec");
   println("Average time for each button: " + nf((timeTaken) / (float) (hits + misses), 0, 3) + " sec");
   println("Average time for each button + penalty: " + nf(((timeTaken) / (float) (hits + misses) + penalty), 0, 3) + " sec");
+}
+
+void drawModeChangeButton() {
+  fill(#AE47FF);
+  circle(width/2, height/2, (2 * centerButtonRadius));
 }
 
 void mouseMoved() {}
