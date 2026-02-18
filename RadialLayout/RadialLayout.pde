@@ -38,6 +38,10 @@ float translateX;
 float translateY;
 PVector center;
 
+int hoveredButtonID = -1; // which radial slice is currently hovered
+boolean debugCollision = false; // set true if you want collision debug prints
+
+
 
 void settings() {
   size(700, 700);
@@ -89,11 +93,17 @@ void draw() {
   text((trialNum + 1) + " of " + trials.size(), 40, 20);
   text(radialMode ? "MODE: Radial (press C to exit)" : "MODE: GRID (press C for radial)", width/2, 20);
 
-  drawModeChangeButton();
+drawModeChangeButton();
 
-  for (int i = 0; i < 16; i++)
-    drawButton(i);
+// compute hover only in radial mode
+hoveredButtonID = radialMode ? testButtonCollision(mouseX, mouseY) : -1;
+
+for (int i = 0; i < 16; i++)
+  drawButton(i);
+
+if (!radialMode) {
   makeTargetBlue(trials.get(trialNum));
+}
 
   fill(255, 0, 0, 200);
   ellipse(mouseX, mouseY, 20, 20);
@@ -228,13 +238,25 @@ int testButtonCollision(int locX, int locY) {
     }
   }
 
-
   return -1;
 }
 
 void drawButton(int i) {
   PShape button = getButtonBounds(i);
-  button.setFill(color(200));
+
+  if (radialMode) {
+    boolean isTarget = (trials.get(trialNum) == i);
+    boolean isHover  = (hoveredButtonID == i);
+
+    // target = cyan, hover = orange, both = green
+    if (isTarget && isHover) button.setFill(color(0, 255, 0));
+    else if (isTarget) button.setFill(color(0, 255, 255));
+    else if (isHover) button.setFill(color(255, 160, 0));
+    else button.setFill(color(200));
+  } else {
+    button.setFill(color(200));
+  }
+
   shape(button);
 }
 
