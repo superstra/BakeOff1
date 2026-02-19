@@ -93,17 +93,17 @@ void draw() {
   text((trialNum + 1) + " of " + trials.size(), 40, 20);
   text(radialMode ? "MODE: Radial (press C to exit)" : "MODE: GRID (press C for radial)", width/2, 20);
 
-drawModeChangeButton();
+  drawModeChangeButton();
 
-// compute hover only in radial mode
-hoveredButtonID = radialMode ? testButtonCollision(mouseX, mouseY) : -1;
+  // compute hover only in radial mode
+  hoveredButtonID = radialMode ? testButtonCollision(mouseX, mouseY) : -1;
 
-for (int i = 0; i < 16; i++)
-  drawButton(i);
+  for (int i = 0; i < 16; i++)
+    drawButton(i);
 
-if (!radialMode) {
-  makeTargetBlue(trials.get(trialNum));
-}
+  if (!radialMode) {
+    makeTargetBlue(trials.get(trialNum));
+  }
 
   fill(255, 0, 0, 200);
   ellipse(mouseX, mouseY, 20, 20);

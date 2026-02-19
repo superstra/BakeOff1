@@ -9,6 +9,8 @@ import java.awt.AWTException;
 import java.awt.Robot;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.awt.Point;
+import java.awt.Component;
 
 int margin = 200;
 final int padding = 50;
@@ -25,7 +27,7 @@ int numRepeats = 1;
 
 // Radial Layout
 boolean radialMode = false;
-final int centerButtonRadius = 18;
+final int centerButtonRadius = 14;
 
 final int numButtons = 16;
 final float offset = PI / numButtons;
@@ -39,6 +41,16 @@ int hoveredButtonID = -1;
 boolean debugCollision = false;
 
 Robot robot;
+
+void snapMouseToCenter() {
+  Component canvas = (Component) surface.getNative();
+  Point topLeft = canvas.getLocationOnScreen();
+
+  int sx = topLeft.x + width/2;
+  int sy = topLeft.y + height/2;
+
+  robot.mouseMove(sx, sy);
+}
 
 void settings() {
   size(700, 700);
@@ -67,7 +79,8 @@ void setup() {
   translateY = center.y;
 
   // move mouse to center initially
-  robot.mouseMove(int(center.x) + 7, int(center.y) + 30);
+  // robot.mouseMove(int(center.x) + 7, int(center.y) + 30);
+  snapMouseToCenter();
 }
 
 void draw() {
@@ -104,7 +117,7 @@ void draw() {
 
   // visual cursor
   fill(255, 0, 0, 200);
-  ellipse(mouseX, mouseY, 20, 20);
+  ellipse(mouseX, mouseY, 16, 16);
 }
 
 void drawButton(int i) {
@@ -125,7 +138,8 @@ void drawButton(int i) {
     int centerY = int(pos.y) + buttonSize/2;
 
     boolean isHovered = (abs(mouseX - centerX) < expandedHitbox/2 &&
-                         abs(mouseY - centerY) < expandedHitbox/2);
+                         abs(mouseY - centerY) < expandedHitbox/2) &&
+                         !(center.dist(new PVector(mouseX, mouseY)) <= centerButtonRadius);
 
     int currentSize = buttonSize;
     float xOffset = 0;
@@ -146,6 +160,11 @@ void mousePressed() {
   if (trialNum >= trials.size()) return;
   if (trialNum == 0) startTime = millis();
 
+  if (center.dist(new PVector(mouseX, mouseY)) <= centerButtonRadius) {
+    radialMode = !radialMode;
+    return;
+  }
+
   int targetID = trials.get(trialNum);
   int selectedID = radialMode ? testButtonCollision(mouseX, mouseY) : getSelectedButton(mouseX, mouseY);
 
@@ -156,7 +175,9 @@ void mousePressed() {
   trialNum++;
 
   // reset mouse to center after click
-  robot.mouseMove(int(center.x) + 7, int(center.y) + 30);
+  // robot.mouseMove(int(center.x) + 7, int(center.y) + 30);
+  snapMouseToCenter();
+
 }
 
 int getSelectedButton(int mX, int mY) {
